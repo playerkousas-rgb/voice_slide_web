@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Cue Slide Tool</title>
+  <meta name="description" content="Browser-based voice cue slide player for meetings and events." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="logo">VC</div>
+        <div>
+          <h1>Voice Cue Slide Tool</h1>
+          <p>GitHub + Vercel Static MVP</p>
+        </div>
+      </div>
+      <nav class="nav" id="stepNav"></nav>
+      <div class="side-card">
+        <h3>測試版功能</h3>
+        <ul>
+          <li>本機載入投影片圖片</li>
+          <li>載入 / 下載 project.vcue.json</li>
+          <li>Cue Builder 設定觸發與動作</li>
+          <li>Chrome / Edge 語音辨識</li>
+          <li>全螢幕播放器 + 人手後備</li>
+        </ul>
+      </div>
+      <div class="side-card">
+        <h3>Google Drive 模式</h3>
+        <p>第一版先用 Google Drive 資料夾手動工作流：把 slides、司儀稿、project.vcue.json 放同一資料夾分享。真正 Drive API 放第二階段。</p>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="title">
+          <h2 id="screenTitle">選擇使用方式</h2>
+          <p id="screenDesc">先選純瀏覽器即插即用，或 Google Drive 資料夾工作流。</p>
+          <div class="badges" id="badges"></div>
+        </div>
+        <div class="row">
+          <input id="projectFileInput" type="file" accept=".json,.vcue,application/json" hidden />
+          <button class="btn ghost" id="importProjectTopBtn">載入 Project</button>
+          <button class="btn ghost" id="downloadProjectTopBtn">下載 Project</button>
+          <button class="btn primary" data-step-jump="4">開始放映</button>
+        </div>
+      </header>
+
+      <section class="screen active" data-screen="0">
+        <div class="grid-2">
+          <button class="choice selected" data-app-mode="browser">
+            <div class="icon">⚡</div>
+            <h3>純瀏覽器即插即用</h3>
+            <p>不需登入、不需後端、不需安裝。用戶在自己電腦選投影片圖片和司儀稿，所有資料留在本機瀏覽器。</p>
+            <ul>
+              <li>最適合第一版公開測試</li>
+              <li>Vercel static site 即可部署</li>
+              <li>Project JSON 可重用設定</li>
+            </ul>
+          </button>
+          <button class="choice" data-app-mode="drive">
+            <div class="icon">☁️</div>
+            <h3>Google Drive 資料夾模式</h3>
+            <p>活動檔案放在 Google Drive 資料夾；第一版可用同步/下載後手動選檔，第二版再接 Drive API。</p>
+            <ul>
+              <li>每個活動 = 一個 Drive 資料夾</li>
+              <li>可分享 project.vcue.json</li>
+              <li>適合非技術用戶</li>
+            </ul>
+          </button>
+        </div>
+        <div class="card pad mt">
+          <div class="split">
+            <div>
+              <h3>已有 project.vcue.json？</h3>
+              <p class="muted">直接載入即可恢復 cue、模式、門檻、冷卻、司儀稿和 slide title。Browser 模式下，再選一次投影片圖片資料夾即可。</p>
+            </div>
+            <button class="btn primary" id="importProjectHeroBtn">載入 Project JSON</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="1">
+        <div class="callout info mb" id="modeHelp"></div>
+        <div class="grid-main">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <div><h3>A 檔：投影片</h3><p>PowerPoint / Canva / Google Slides 建議先匯出成 PNG/JPG。選擇整個資料夾，系統會按檔名排序。</p></div>
+                <span class="badge"><span class="dot blue"></span>Slides</span>
+              </div>
+              <div class="card-body stack">
+                <div class="dropzone">
+                  <strong>選擇投影片圖片資料夾</strong>
+                  <p>PowerPoint 匯出通常是 <code>Slide1.PNG</code>、<code>Slide2.PNG</code>……；Canva 下載 zip 後請先解壓。</p>
+                  <input id="slideFolderInput" type="file" accept="image/*" webkitdirectory directory multiple />
+                  <input id="slideFilesInput" type="file" accept="image/*" multiple />
+                </div>
+                <div class="file-list" id="slideList"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><div><h3>Project / Cue 匯入</h3><p>Project JSON 保存完整設定；CSV 可快速匯入傳統 cue 表。</p></div></div>
+              <div class="card-body stack">
+                <div class="grid-2">
+                  <div><label>載入 project.vcue.json</label><button class="btn primary full" id="importProjectStepBtn">選擇 Project JSON</button></div>
+                  <div><label>匯入 Cue CSV</label><input id="cueCsvInput" type="file" accept=".csv,.txt,text/csv,text/plain" /></div>
+                </div>
+                <div class="callout">Browser 安全限制：Project JSON 不會保存圖片檔案本身；重用時需要重新選一次 slides 資料夾。Google Drive API 第二版可改善。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <div><h3>B 檔：司儀稿 / 逐字稿</h3><p>第一版支援 TXT 或直接貼上。DOCX/PDF 可先複製文字貼上；之後再做解析。</p></div>
+                <span class="badge"><span class="dot yellow"></span>Script</span>
+              </div>
+              <div class="card-body stack">
+                <input id="scriptFileInput" type="file" accept=".txt,.csv,.md,text/plain,text/csv,text/markdown" />
+                <textarea id="scriptText" placeholder="在此貼上司儀稿 / 逐字稿。系統會切成句子，供 Cue Builder 使用。"></textarea>
+                <div class="row"><button class="btn" id="parseScriptBtn">解析司儀稿</button><button class="btn ghost" id="loadSampleBtn">載入示例</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><div><h3>Slide Titles</h3><p>「參閱 XXX」模式會用這些標題做 matching。可由檔名產生，再手動修改。</p></div></div>
+              <div class="card-body"><div class="slide-title-list" id="slideTitleList"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="2">
+        <div class="grid-3">
+          <button class="mode-card selected" data-cue-mode="keyword">
+            <h3>1. 指定句 / 關鍵字 Cue</h3>
+            <p>聽到表格內指定句子後，執行跳頁、下一頁、跳到標題或提示確認。</p>
+            <div class="badges"><span class="badge"><span class="dot green"></span>最穩定</span><span class="badge">正式活動建議</span></div>
+          </button>
+          <button class="mode-card" data-cue-mode="transcript">
+            <h3>2. 逐字稿配對</h3>
+            <p>將現場說話與司儀稿下一段附近對齊，用作追蹤和輔助 cue 命中。</p>
+            <div class="badges"><span class="badge"><span class="dot yellow"></span>輔助追蹤</span><span class="badge">長稿適用</span></div>
+          </button>
+          <button class="mode-card" data-cue-mode="titleLock">
+            <h3>3. 參閱 XXX 標題鎖定</h3>
+            <p>聽到「參閱附件二」「進入財務報告」後，匹配 slide title 並跳到相關頁。</p>
+            <div class="badges"><span class="badge"><span class="dot blue"></span>會議文件友善</span><span class="badge">Title match</span></div>
+          </button>
+        </div>
+
+        <div class="card pad mt">
+          <h3>安全與語音設定</h3>
+          <div class="grid-3">
+            <div><label>觸發模式</label><select id="triggerMode"><option value="sequential">Sequential｜只等待下一個 cue</option><option value="any">Any｜任何 cue 命中都可跳</option><option value="confirm">Confirm｜命中後要人手確認</option></select></div>
+            <div><label>語音語言</label><select id="speechLang"><option value="zh-HK" selected>zh-HK｜香港中文 / 廣東話</option><option value="zh-TW">zh-TW｜繁體中文</option><option value="zh-CN">zh-CN｜普通話</option><option value="en-US">en-US｜English</option></select></div>
+            <div><label>預設門檻</label><input id="defaultThreshold" type="number" min="60" max="98" value="84" /></div>
+            <div><label>冷卻時間（秒）</label><input id="cooldownSeconds" type="number" min="1" max="10" value="3" /></div>
+            <div><label>Title Lock 搜尋範圍</label><select id="titleWindow"><option value="8">只搜尋目前頁後 8 頁</option><option value="999">搜尋所有頁</option><option value="3">只搜尋目前頁後 3 頁</option></select></div>
+            <div><label>辨識候選數</label><select id="maxAlternatives"><option value="3" selected>3</option><option value="1">1</option><option value="5">5</option></select></div>
+          </div>
+          <div class="callout ok mt-sm">正式活動建議：<strong>Sequential</strong> + 長而獨特的 cue + 人手鍵盤後備。若現場太嘈，可改用 Confirm 模式。</div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="3">
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Cue Builder</h3><p>設定「聽到甚麼」和「執行甚麼動作」。Cue 表是真正放映時會使用的規則。</p></div>
+              <div class="row"><button class="btn small" id="addCueBtn">+ 新增</button><button class="btn small primary" id="suggestCueBtn">從稿建議</button><button class="btn small" id="exportCsvBtn">下載 CSV</button></div>
+            </div>
+            <div class="card-body">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th class="col-order">#</th><th class="col-enabled">啟用</th><th>觸發字眼 / 句子</th><th class="col-action">動作</th><th class="col-target">目標</th><th class="col-threshold">門檻</th><th class="col-tools">工具</th></tr></thead>
+                  <tbody id="cueTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><div><h3>從司儀稿加入 Cue</h3><p>點一句即可加入 cue。目標頁可之後在表格修改。</p></div></div>
+              <div class="card-body"><div class="script-lines" id="scriptLines"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div><h3>規則說明</h3><p>目前啟用模式的實際行為。</p></div></div>
+              <div class="card-body stack" id="rulePreview"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="4">
+        <div class="present-layout">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>放映 / 彩排</h3><p>按「開始聆聽」後，Chrome/Edge 會要求咪高峰權限。Vercel 是 HTTPS，可使用 microphone。</p></div>
+              <div class="row"><button class="btn small" id="prevSlideBtn">上一頁</button><button class="btn small" id="nextSlideBtn">下一頁</button><button class="btn small primary" id="fullscreenBtn">全螢幕</button></div>
+            </div>
+            <div class="card-body stack">
+              <div class="stage" id="stage">
+                <img id="slideImage" alt="Current slide" />
+                <div class="placeholder" id="slidePlaceholder"><h3>未載入投影片</h3><p>請先到「提供 A/B 資料」選擇投影片圖片資料夾。<br>若只測試 voice matching，可先不載入圖片。</p></div>
+                <div class="overlay"><div class="overlay-box"><strong id="overlaySlide">Slide - / -</strong><br><span id="overlayCue">下一個 cue：未設定</span></div><div class="overlay-box">最近聽到：<br><span id="overlayHeard" class="small">—</span></div></div>
+              </div>
+              <div class="row"><span class="badge"><span id="listenDot" class="dot"></span><span id="listenState">未開始聆聽</span></span><span class="badge" id="currentSlideBadge">Slide - / -</span><span class="badge" id="nextCueBadge">下一個 cue：未設定</span></div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head"><div><h3>語音控制</h3><p>可用真咪高峰，或在下方輸入文字模擬。</p></div></div>
+              <div class="card-body stack">
+                <div class="row"><button class="btn primary" id="startListenBtn">開始聆聽</button><button class="btn danger" id="stopListenBtn">停止</button><button class="btn" id="resetCueProgressBtn">重設 Cue 進度</button></div>
+                <div class="pending" id="pendingBox"></div>
+                <div><label>模擬聽到一句說話</label><input id="manualHeardInput" type="text" value="區務委員會周年大會現在正式開始" /></div>
+                <div class="row"><button class="btn" id="manualTestBtn">測試命中</button><button class="btn ghost" id="clearLogBtn">清除記錄</button></div>
+              </div>
+            </div>
+            <div class="card"><div class="card-head"><div><h3>Log</h3><p>彩排時可用來查看辨識結果和命中原因。</p></div></div><div class="card-body"><div class="log" id="logBox"></div></div></div>
+            <div class="callout">快捷鍵：<span class="kbd">←</span>/<span class="kbd">→</span> 上一頁/下一頁，數字 + <span class="kbd">Enter</span> 跳頁，<span class="kbd">F</span> 全螢幕，<span class="kbd">Space</span> 暫停/恢復聆聽。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="5">
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-head">
+              <div><h3>Project JSON</h3><p>下載後可放入 Google Drive 活動資料夾。下次載入即可重用設定。</p></div>
+              <div class="row"><button class="btn small primary" id="downloadProjectBtn">下載 project.vcue.json</button><button class="btn small" id="copyProjectBtn">複製 JSON</button></div>
+            </div>
+            <div class="card-body"><div class="log project-json" id="projectJsonPreview"></div></div>
+          </div>
+          <div class="stack">
+            <div class="card pad">
+              <h3>部署後用戶流程</h3>
+              <div class="stack">
+                <div class="file-line"><div><b>第一次</b><br><span>選 slides → 貼/載入司儀稿 → 設 cue → 下載 project.vcue.json</span></div><span class="green">設定</span></div>
+                <div class="file-line"><div><b>下次重用</b><br><span>載入 project.vcue.json → 再選 slides 資料夾 → 開始放映</span></div><span class="green">重用</span></div>
+                <div class="file-line"><div><b>Google Drive</b><br><span>把 slides、script、project.vcue.json 放在同一活動資料夾分享</span></div><span class="yellow">手動</span></div>
+              </div>
+            </div>
+            <div class="card pad">
+              <h3>Git + Vercel</h3>
+              <p class="muted">把 <code>voice_slide_web</code> 作為 repo root 或 Vercel Root Directory，部署即可。第一版無後端，所有資料在用戶瀏覽器處理。</p>
+              <div class="row"><button class="btn" data-step-jump="0">回到開始</button><button class="btn primary" data-step-jump="4">去放映測試</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="nav-actions">
+        <button class="btn" id="prevStepBtn">← 上一步</button>
+        <div class="row"><span class="badge" id="stepBadge">Step 1 / 6</span><button class="btn primary" id="nextStepBtn">下一步 →</button></div>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "schema": "voice-cue-slide-project",
+  "version": 1,
+  "appMode": "browser",
+  "settings": {
+    "triggerMode": "sequential",
+    "speechLang": "zh-HK",
+    "defaultThreshold": 84,
+    "cooldownSeconds": 3,
+    "titleWindow": 8,
+    "cueModes": ["keyword", "titleLock"]
+  },
+  "slideTitles": [
+    { "slideNo": 1, "title": "封面" },
+    { "slideNo": 2, "title": "簽到表格 / 會議文件" },
+    { "slideNo": 3, "title": "議程一 通過上次會議紀錄" },
+    { "slideNo": 4, "title": "議程二 未了事項" },
+    { "slideNo": 5, "title": "議程三 區務報告" },
+    { "slideNo": 6, "title": "議程四 財務報告" },
+    { "slideNo": 7, "title": "議程五 區財政預算" },
+    { "slideNo": 8, "title": "議程六 區務委員會成員" },
+    { "slideNo": 9, "title": "議程七 區執行委員會成員" },
+    { "slideNo": 10, "title": "議程八 義務核數師" },
+    { "slideNo": 11, "title": "議程九 其他事項" },
+    { "slideNo": 12, "title": "會議結束" },
+    { "slideNo": 13, "title": "大合照 / 尾頁" }
+  ],
+  "scriptText": "司儀：2025至2026年度筲箕灣區區務委員會周年大會現在開始，請各位來賓就座。\n會長：2025至2026年度區務委員會周年大會，現在正式開始。\n會長：宣佈通過第49屆區務委員會周年大會會議記錄。\n會長：無未了事項，進入議程三。\n會長：宣佈通過2025至2026年度筲箕灣區的區務報告。\n會長：宣佈通過2025至2026年度筲箕灣區的財務報告。\n會長：如果無的話，我宣佈周年大會圓滿結束。\n司儀：由工作人員安排拍攝大合照。",
+  "cues": [
+    { "order": 1, "enabled": true, "trigger": "區務委員會周年大會現在正式開始", "action": "goto_slide", "target": "3", "threshold": 84 },
+    { "order": 2, "enabled": true, "trigger": "宣佈通過第49屆區務委員會周年大會會議記錄", "action": "goto_slide", "target": "4", "threshold": 84 },
+    { "order": 3, "enabled": true, "trigger": "無未了事項進入議程三", "action": "goto_slide", "target": "5", "threshold": 84 },
+    { "order": 4, "enabled": true, "trigger": "宣佈通過2025至2026年度筲箕灣區的區務報告", "action": "goto_slide", "target": "6", "threshold": 84 },
+    { "order": 5, "enabled": true, "trigger": "宣佈通過2025至2026年度筲箕灣區的財務報告", "action": "goto_slide", "target": "7", "threshold": 84 },
+    { "order": 6, "enabled": true, "trigger": "如果無的話我宣佈周年大會圓滿結束", "action": "goto_slide", "target": "12", "threshold": 84 },
+    { "order": 7, "enabled": true, "trigger": "由工作人員安排拍攝大合照", "action": "goto_slide", "target": "13", "threshold": 84 }
+  ],
+  "notes": "Browser 模式只保存設定和文字，不保存圖片檔案本身；重用時請重新選 slides 資料夾。"
+}

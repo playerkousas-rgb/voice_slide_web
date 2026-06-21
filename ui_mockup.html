@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Cue Slide Tool｜UI Mockup</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg2: #111a2e;
+      --panel: rgba(20, 31, 53, .92);
+      --panel2: rgba(30, 44, 72, .95);
+      --panel3: rgba(11, 16, 32, .88);
+      --line: rgba(148, 163, 184, .22);
+      --line2: rgba(148, 163, 184, .38);
+      --text: #f1f5f9;
+      --muted: #a7b4c8;
+      --soft: #dbeafe;
+      --cyan: #5eead4;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #fb7185;
+      --shadow: rgba(0,0,0,.38);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(94, 234, 212, .16), transparent 28%),
+        radial-gradient(circle at 80% 0%, rgba(96, 165, 250, .16), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(167, 139, 250, .13), transparent 34%),
+        linear-gradient(135deg, var(--bg), var(--bg2));
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px;
+      border-right: 1px solid var(--line);
+      background: rgba(8, 13, 28, .72);
+      backdrop-filter: blur(18px);
+      overflow: auto;
+    }
+
+    main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(94, 234, 212, .95), rgba(96, 165, 250, .95));
+      color: #06111f;
+      font-weight: 900;
+      box-shadow: 0 16px 38px rgba(94, 234, 212, .16);
+    }
+    .brand h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+    .brand p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+
+    .progress {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .step-pill {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      width: 100%;
+    }
+    .step-pill:hover { background: rgba(148, 163, 184, .08); }
+    .step-pill.active {
+      color: var(--text);
+      background: rgba(94, 234, 212, .10);
+      border-color: rgba(94, 234, 212, .30);
+    }
+    .step-pill.done { color: #cbd5e1; }
+    .step-no {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(148, 163, 184, .13);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+    .step-pill.active .step-no { background: var(--cyan); color: #062022; border-color: transparent; }
+    .step-pill.done .step-no { background: rgba(52, 211, 153, .18); color: #a7f3d0; border-color: rgba(52, 211, 153, .35); }
+    .step-title { font-weight: 750; font-size: 13px; }
+    .step-desc { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+    .side-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(15, 23, 42, .58);
+      padding: 14px;
+      margin-top: 18px;
+    }
+    .side-card h3 { margin: 0 0 8px; font-size: 13px; }
+    .side-card p, .side-card li { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .side-card ul { margin: 8px 0 0 18px; padding: 0; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .title-block h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: -.8px;
+    }
+    .title-block p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 880px;
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, .58);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted); display: inline-block; }
+    .dot.green { background: var(--green); box-shadow: 0 0 16px rgba(52,211,153,.5); }
+    .dot.yellow { background: var(--yellow); box-shadow: 0 0 16px rgba(251,191,36,.4); }
+    .dot.blue { background: var(--blue); box-shadow: 0 0 16px rgba(96,165,250,.4); }
+
+    .screen {
+      display: none;
+      animation: fade .18s ease;
+    }
+    .screen.active { display: block; }
+    @keyframes fade { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .grid-main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr); gap: 18px; align-items: start; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel), rgba(13, 20, 38, .90));
+      box-shadow: 0 18px 50px var(--shadow);
+      overflow: hidden;
+    }
+    .card.pad { padding: 18px; }
+    .card-head {
+      padding: 17px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-head h3 { margin: 0; font-size: 16px; }
+    .card-head p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .card-body { padding: 18px; }
+
+    .choice {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, .72), rgba(15, 23, 42, .72));
+      min-height: 250px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .choice:hover { transform: translateY(-2px); border-color: var(--line2); }
+    .choice.selected {
+      border-color: rgba(94, 234, 212, .72);
+      box-shadow: 0 0 0 1px rgba(94,234,212,.25), 0 20px 55px rgba(20,184,166,.10);
+      background: linear-gradient(180deg, rgba(20, 184, 166, .14), rgba(15, 23, 42, .74));
+    }
+    .choice .icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: rgba(96, 165, 250, .14);
+      color: #bfdbfe;
+      font-size: 27px;
+      margin-bottom: 15px;
+    }
+    .choice h3 { margin: 0 0 8px; font-size: 20px; }
+    .choice p { color: var(--muted); line-height: 1.55; margin: 0 0 14px; }
+    .choice ul { margin: 0 0 0 18px; padding: 0; color: var(--muted); line-height: 1.55; font-size: 13px; }
+
+    .btn {
+      border: 1px solid var(--line2);
+      color: var(--text);
+      background: rgba(30, 41, 59, .88);
+      border-radius: 13px;
+      padding: 10px 14px;
+      font-weight: 750;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+    }
+    .btn:hover { background: rgba(51, 65, 85, .88); border-color: rgba(203, 213, 225, .45); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary {
+      border-color: rgba(94, 234, 212, .45);
+      background: linear-gradient(135deg, #0f766e, #2563eb);
+    }
+    .btn.primary:hover { background: linear-gradient(135deg, #0d9488, #1d4ed8); }
+    .btn.ghost { background: transparent; }
+    .btn.danger { background: rgba(127, 29, 29, .72); border-color: rgba(248, 113, 113, .35); }
+    .btn.small { padding: 7px 10px; font-size: 12px; border-radius: 10px; }
+    .btn:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+
+    .nav-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+      margin-top: 22px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(8, 13, 28, .82);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 -18px 50px rgba(0,0,0,.20);
+    }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .stack { display: grid; gap: 12px; }
+    .muted { color: var(--muted); }
+    .soft { color: var(--soft); }
+    .cyan { color: var(--cyan); }
+    .green { color: var(--green); }
+    .yellow { color: var(--yellow); }
+    .red { color: var(--red); }
+    .small { font-size: 12px; line-height: 1.45; }
+
+    .dropzone {
+      border: 1px dashed rgba(148, 163, 184, .42);
+      background: rgba(11, 16, 32, .55);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 142px;
+      display: grid;
+      gap: 10px;
+      align-content: center;
+    }
+    .dropzone strong { display: block; font-size: 16px; }
+    .dropzone p { color: var(--muted); margin: 0; line-height: 1.45; }
+    .file-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(15, 23, 42, .68);
+    }
+    .file-line b { font-size: 13px; }
+    .file-line span { font-size: 12px; color: var(--muted); }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      color: var(--text);
+      background: rgba(6, 10, 22, .72);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      outline: none;
+    }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.55; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(94, 234, 212, .65); box-shadow: 0 0 0 3px rgba(94,234,212,.10); }
+
+    .mode-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(15, 23, 42, .64);
+      min-height: 210px;
+    }
+    .mode-card.selected { border-color: rgba(96, 165, 250, .70); background: rgba(37, 99, 235, .12); }
+    .mode-card h3 { margin: 0 0 8px; font-size: 17px; }
+    .mode-card p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; font-size: 13px; }
+    .toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, .22);
+      border: 1px solid var(--line);
+    }
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transition: left .12s ease, background .12s ease;
+    }
+    .selected .toggle { background: rgba(94, 234, 212, .20); border-color: rgba(94, 234, 212, .45); }
+    .selected .toggle::after { left: 22px; background: var(--cyan); }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-align: left; background: rgba(15, 23, 42, .68); position: sticky; top: 0; z-index: 1; }
+    td { font-size: 13px; }
+    .table-wrap { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: rgba(6, 10, 22, .42); }
+    .table-wrap input, .table-wrap select { padding: 8px; border-radius: 10px; font-size: 12px; min-width: 0; }
+    .col-order { width: 50px; }
+    .col-action { width: 150px; }
+    .col-target { width: 115px; }
+    .col-threshold { width: 92px; }
+    .col-tools { width: 84px; }
+
+    .script-panel {
+      display: grid;
+      gap: 10px;
+      max-height: 520px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .script-line {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px;
+      background: rgba(15, 23, 42, .60);
+      color: #dbeafe;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+    .script-line .meta { color: var(--muted); font-size: 11px; margin-bottom: 5px; display: flex; justify-content: space-between; gap: 8px; }
+    .script-line:hover { border-color: rgba(94, 234, 212, .45); }
+    .script-line.marked { background: rgba(94, 234, 212, .10); border-color: rgba(94, 234, 212, .42); }
+
+    .preview {
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(15,23,42,.95), rgba(30,41,59,.95)),
+        radial-gradient(circle at 30% 30%, rgba(94,234,212,.14), transparent 40%);
+      display: grid;
+      place-items: center;
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .slide-mock {
+      width: 86%;
+      height: 78%;
+      border-radius: 14px;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 28px;
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.34);
+    }
+    .slide-mock h4 { margin: 0; font-size: 27px; }
+    .slide-mock p { margin: 0; color: #334155; }
+    .slide-mock .bar { height: 12px; border-radius: 99px; background: #dbeafe; }
+    .slide-mock .bar.short { width: 70%; }
+    .preview-label {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #e0f2fe;
+      font-size: 12px;
+      background: rgba(0,0,0,.46);
+      border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .log {
+      min-height: 160px;
+      max-height: 230px;
+      overflow: auto;
+      background: rgba(6, 10, 22, .68);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(15, 23, 42, .60);
+    }
+    .metric b { display: block; font-size: 22px; margin-bottom: 4px; }
+    .metric span { color: var(--muted); font-size: 12px; }
+
+    .callout {
+      border: 1px solid rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+      color: #fde68a;
+      border-radius: 16px;
+      padding: 14px;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+    .success-callout {
+      border-color: rgba(52,211,153,.35);
+      background: rgba(52,211,153,.08);
+      color: #bbf7d0;
+    }
+
+    .kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--line2);
+      border-bottom-width: 2px;
+      color: var(--soft);
+      background: rgba(15,23,42,.9);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      main { padding: 18px; }
+      .grid-2, .grid-3, .grid-main, .summary-grid { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="logo">VC</div>
+        <div>
+          <h1>Voice Cue Slide Tool</h1>
+          <p>UI Mockup｜Vercel + Google Drive Friendly</p>
+        </div>
+      </div>
+
+      <div class="progress" id="progress"></div>
+
+      <div class="side-card">
+        <h3>Prototype 重點</h3>
+        <ul>
+          <li>先選使用模式：純瀏覽器 / Google Drive</li>
+          <li>再提供 A 投影片 + B 司儀稿</li>
+          <li>可選 1/2/3 種 Cue 模式</li>
+          <li>最後用表格設定觸發字眼和動作</li>
+        </ul>
+      </div>
+
+      <div class="side-card">
+        <h3>目前只是 UI 模擬</h3>
+        <p>Google Drive 按鈕、AI 建議、逐字稿配對在這版只是互動假資料；之後可逐步接真正功能。</p>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="title-block">
+          <h2 id="pageTitle">選擇使用方式</h2>
+          <p id="pageDesc">讓用戶一開始先決定：只在本機瀏覽器即插即用，還是連接 Google Drive 作多用戶共用。</p>
+          <div class="badge-row" id="statusBadges"></div>
+        </div>
+        <div class="row">
+          <input id="projectImportFile" type="file" accept=".json,.vcue,application/json" style="display:none" />
+          <button class="btn ghost" id="importProjectBtn">載入 Project</button>
+          <button class="btn ghost" id="resetBtn">重設 Demo</button>
+          <button class="btn primary" data-goto="5">跳到預覽</button>
+        </div>
+      </div>
+
+      <!-- STEP 0 -->
+      <section class="screen active" data-screen="0">
+        <div class="grid-2">
+          <button class="choice" data-app-mode="browser">
+            <div class="icon">⚡</div>
+            <h3>純瀏覽器即插即用</h3>
+            <p>不用登入、不上傳到伺服器。用戶在自己電腦選投影片圖片及司儀稿，所有資料留在本機。</p>
+            <ul>
+              <li>最適合即場使用、私隱最高</li>
+              <li>GitHub + Vercel 靜態部署已足夠</li>
+              <li>下次重用可載入 Project JSON</li>
+            </ul>
+          </button>
+
+          <button class="choice" data-app-mode="drive">
+            <div class="icon">☁️</div>
+            <h3>Google Drive 模式</h3>
+            <p>活動資料夾放在 Google Drive，讓不同同事可共用同一組投影片、司儀稿和 cue 設定。</p>
+            <ul>
+              <li>每個活動 = 一個 Google Drive 資料夾</li>
+              <li>可分享給操作員 / 司儀 / 負責人</li>
+              <li>之後接 Google Picker / Drive API</li>
+            </ul>
+          </button>
+        </div>
+
+        <div class="card pad" style="margin-top:18px;">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3 style="margin:0 0 6px;">建議 UX</h3>
+              <p class="muted" style="margin:0; line-height:1.55;">第一版先讓任何人打開網址就能用；第二版再加入 Google Drive 讀取，避免要用戶理解 Supabase/database。</p>
+            </div>
+            <span class="badge"><span class="dot green"></span>推薦先做 Browser MVP</span>
+          </div>
+          <div class="callout success-callout" style="margin-top:14px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+            <div><strong>已有 project.vcue.json？</strong><br>直接載入即可恢復 cue、模式、門檻等設定；Browser 模式下再選一次投影片圖片資料夾便可重用。</div>
+            <button class="btn small primary" id="importProjectHeroBtn">載入 Project JSON</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 1 -->
+      <section class="screen" data-screen="1">
+        <div class="card pad" id="reuseProjectCard" style="margin-bottom:18px;">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3 style="margin:0 0 6px;">重用舊設定</h3>
+              <p class="muted" style="margin:0; line-height:1.55;">如果之前已匯出 <code>project.vcue.json</code>，可以先載入它；系統會還原 Cue Builder、Cue 模式和安全設定。</p>
+            </div>
+            <button class="btn primary" id="importProjectStepBtn">載入 project.vcue.json</button>
+          </div>
+        </div>
+        <div id="browserSource" class="grid-main">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>A 檔：投影片</h3>
+                <p>PowerPoint / Canva / Google Slides 先匯出成 PNG、JPG 或 PDF。第一版建議用圖片資料夾。</p>
+              </div>
+              <span class="badge"><span class="dot blue"></span>本機載入</span>
+            </div>
+            <div class="card-body stack">
+              <div class="dropzone">
+                <strong>選擇投影片圖片資料夾</strong>
+                <p>例如：Slide1.png、Slide2.png、Slide3.png⋯⋯</p>
+                <div class="row">
+                  <button class="btn primary" id="mockUploadSlides">模擬已選 slides/ 資料夾</button>
+                  <button class="btn ghost">選擇檔案</button>
+                </div>
+              </div>
+              <div id="slideFilesList"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>B 檔：司儀稿 / 逐字稿</h3>
+                <p>可上傳 DOCX/PDF/TXT，或直接貼上稿。初版可先支援貼文字和 TXT。</p>
+              </div>
+              <span class="badge"><span class="dot yellow"></span>Script</span>
+            </div>
+            <div class="card-body stack">
+              <div class="dropzone">
+                <strong>上傳或貼上司儀稿</strong>
+                <p>系統會抽取可讀句子，供下一步選 cue。</p>
+                <div class="row">
+                  <button class="btn primary" id="mockUploadScript">模擬載入司儀稿</button>
+                  <button class="btn ghost">上傳 B 檔</button>
+                </div>
+              </div>
+              <textarea id="scriptText" placeholder="在此貼上司儀稿⋯⋯"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="driveSource" class="grid-main" style="display:none;">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>從 Google Drive 開啟活動資料夾</h3>
+                <p>用戶只要選擇一個活動資料夾，網站讀取裏面的 slides、project.vcue.json、script。</p>
+              </div>
+              <span class="badge"><span class="dot green"></span>Drive Friendly</span>
+            </div>
+            <div class="card-body stack">
+              <div class="dropzone">
+                <strong>連接 Google Drive</strong>
+                <p>這是 mockup。正式版會使用 Google Sign-In + Google Picker。</p>
+                <div class="row">
+                  <button class="btn primary" id="mockConnectDrive">模擬連接 Drive</button>
+                  <button class="btn ghost">選擇活動資料夾</button>
+                </div>
+              </div>
+              <div id="driveFolderList"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>建議 Drive 結構</h3>
+                <p>這樣最容易教其他人用，也方便分享和備份。</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="log">Google Drive/
+└── Voice Cue Slide Projects/
+    └── 2026 周年大會/
+        ├── slides/
+        │   ├── Slide1.png
+        │   ├── Slide2.png
+        │   └── Slide3.png
+        ├── 司儀稿.docx
+        ├── cues.csv
+        └── project.vcue.json</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="screen" data-screen="2">
+        <div class="grid-3">
+          <button class="mode-card selected" data-cue-mode="keyword">
+            <div class="toggle"></div>
+            <h3>1. 指定句 / 關鍵字 Cue</h3>
+            <p>聽到指定句子後，執行下一頁、跳到指定頁、或跳到指定標題。</p>
+            <div class="badge-row">
+              <span class="badge"><span class="dot green"></span>最穩定</span>
+              <span class="badge">正式活動建議</span>
+            </div>
+          </button>
+
+          <button class="mode-card" data-cue-mode="transcript">
+            <div class="toggle"></div>
+            <h3>2. 逐字稿配對</h3>
+            <p>將現場語音與完整司儀稿對齊，知道目前讀到哪一段，再觸發對應 cue。</p>
+            <div class="badge-row">
+              <span class="badge"><span class="dot yellow"></span>智能輔助</span>
+              <span class="badge">適合長稿</span>
+            </div>
+          </button>
+
+          <button class="mode-card" data-cue-mode="titleLock">
+            <div class="toggle"></div>
+            <h3>3. 「參閱 XXX」標題鎖定</h3>
+            <p>聽到「參閱附件二」「進入財務報告」後，自動匹配投影片標題或附件名。</p>
+            <div class="badge-row">
+              <span class="badge"><span class="dot blue"></span>會議文件友善</span>
+              <span class="badge">標題 fuzzy match</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="card pad" style="margin-top:18px;">
+          <h3 style="margin:0 0 10px;">安全設定</h3>
+          <div class="grid-3">
+            <div>
+              <label>觸發模式</label>
+              <select id="triggerMode">
+                <option value="sequential">Sequential｜只等待下一個 cue</option>
+                <option value="any">Any｜任何 cue 命中都可跳</option>
+                <option value="confirm">Confirm｜提示操作員確認才跳</option>
+              </select>
+            </div>
+            <div>
+              <label>預設信心門檻</label>
+              <input type="number" id="defaultThreshold" value="84" min="60" max="98" />
+            </div>
+            <div>
+              <label>冷卻時間（秒）</label>
+              <input type="number" id="cooldown" value="3" min="1" max="10" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="screen" data-screen="3">
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>Cue Builder：觸發字眼與動作</h3>
+                <p>用戶在這裏設定「聽到甚麼」和「要做甚麼」。這會是正式產品最核心的前端介面。</p>
+              </div>
+              <div class="row">
+                <button class="btn small" id="addCueBtn">+ 新增 Cue</button>
+                <button class="btn small primary" id="autoSuggestBtn">自動建議</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="col-order">#</th>
+                      <th>觸發字眼 / 句子</th>
+                      <th class="col-action">動作</th>
+                      <th class="col-target">目標</th>
+                      <th class="col-threshold">門檻</th>
+                      <th class="col-tools">工具</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cueTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>從司儀稿選句</h3>
+                  <p>點選句子可快速加入 cue。正式版可顯示 speaker、heading、是否不用讀。</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="script-panel" id="scriptLines"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>規則預覽</h3>
+                  <p>顯示目前啟用模式如何解讀現場語音。</p>
+                </div>
+              </div>
+              <div class="card-body stack" id="rulePreview"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="screen" data-screen="4">
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>彩排 / 正式放映介面模擬</h3>
+                <p>放映時畫面應盡量簡單，保留人手控制和清楚顯示下一個 cue。</p>
+              </div>
+              <div class="row">
+                <button class="btn small">上一頁</button>
+                <button class="btn small">下一頁</button>
+                <button class="btn small primary">全螢幕</button>
+              </div>
+            </div>
+            <div class="card-body stack">
+              <div class="preview">
+                <div class="preview-label" id="previewLabel">Slide 3 / 13</div>
+                <div class="slide-mock">
+                  <h4 id="mockSlideTitle">議程（一）</h4>
+                  <p id="mockSlideText">通過上次會議紀錄</p>
+                  <div class="bar"></div>
+                  <div class="bar short"></div>
+                </div>
+              </div>
+              <div class="summary-grid">
+                <div class="metric"><b id="metricSlides">13</b><span>投影片</span></div>
+                <div class="metric"><b id="metricCues">0</b><span>Cue 數量</span></div>
+                <div class="metric"><b id="metricModes">1</b><span>啟用模式</span></div>
+                <div class="metric"><b>84</b><span>預設門檻</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>模擬聆聽測試</h3>
+                  <p>輸入一句模擬現場聽到的說話，測試會命中哪個 cue。</p>
+                </div>
+              </div>
+              <div class="card-body stack">
+                <div>
+                  <label>模擬聽到</label>
+                  <input type="text" id="heardInput" value="區務委員會周年大會現在正式開始" />
+                </div>
+                <div class="row">
+                  <button class="btn primary" id="simulateHeardBtn">測試命中</button>
+                  <button class="btn ghost" id="clearLogBtn">清除記錄</button>
+                </div>
+                <div class="log" id="demoLog"></div>
+              </div>
+            </div>
+
+            <div class="callout success-callout">
+              <strong>正式產品可保留的安全設計：</strong><br>
+              Sequential lock、信心不足只提示、空白鍵暫停語音控制、鍵盤人手跳頁、完整 log、彩排後自動優化 cue。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 5 -->
+      <section class="screen" data-screen="5">
+        <div class="card pad">
+          <h3 style="margin-top:0;">Project 摘要</h3>
+          <div class="summary-grid">
+            <div class="metric"><b id="sumMode">Browser</b><span>使用方式</span></div>
+            <div class="metric"><b id="sumCueCount">0</b><span>Cue 數量</span></div>
+            <div class="metric"><b id="sumModeCount">1</b><span>啟用 Cue 模式</span></div>
+            <div class="metric"><b id="sumSafety">Seq</b><span>安全模式</span></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:18px;">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>下一步開發建議</h3>
+                <p>先把 UI flow 固定，再接現有 voice player 功能。</p>
+              </div>
+            </div>
+            <div class="card-body stack">
+              <div class="file-line"><div><b>1. Browser MVP</b><br><span>本機載入 slides + project JSON + cue builder + present mode</span></div><span class="green">先做</span></div>
+              <div class="file-line"><div><b>2. Google Drive 手動工作流</b><br><span>活動資料夾教學、project.vcue.json 重用</span></div><span class="green">可行</span></div>
+              <div class="file-line"><div><b>3. Google Picker</b><br><span>登入 Google，從 Drive 選 project / slides folder</span></div><span class="yellow">第二階段</span></div>
+              <div class="file-line"><div><b>4. 智能 Cue</b><br><span>逐字稿配對、參閱 XXX 標題鎖定、自動建議</span></div><span class="yellow">第三階段</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>匯出設定 Mock</h3>
+                <p>這裏展示之後可下載 project.vcue.json 的資料形態。</p>
+              </div>
+              <div class="row">
+                <button class="btn small" id="downloadJsonBtn">下載 JSON</button>
+                <button class="btn small primary" id="copyJsonBtn">複製 JSON</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="log" id="jsonPreview" style="max-height:420px;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="nav-actions">
+        <button class="btn" id="prevStepBtn">← 上一步</button>
+        <div class="row">
+          <span class="badge" id="currentStepBadge">Step 1 / 6</span>
+          <button class="btn primary" id="nextStepBtn">下一步 →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    'use strict';
+
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+    const steps = [
+      { title: '選擇使用方式', desc: '純瀏覽器即插即用 / Google Drive 連通多用', short: '使用模式' },
+      { title: '提供 A / B 資料', desc: 'A=投影片，B=司儀稿或逐字稿', short: '上傳資料' },
+      { title: '選擇 Cue 模式', desc: '指定句、逐字稿配對、參閱標題鎖定', short: 'Cue 模式' },
+      { title: '設定觸發與動作', desc: '輸入關鍵字眼、目標頁、動作和門檻', short: 'Cue Builder' },
+      { title: '彩排 / 放映預覽', desc: '模擬聆聽、命中、跳頁和記錄', short: '預覽測試' },
+      { title: 'Project 摘要', desc: '可匯出 project.vcue.json，方便重用', short: '完成' }
+    ];
+
+    const sampleScript = [
+      { speaker: '司儀', text: '2025至2026年度筲箕灣區區務委員會周年大會現在開始，請各位來賓就座。', slide: 1 },
+      { speaker: '司儀', text: '現在恭請筲箕灣區會長呂凌鳴先生主持會議。', slide: 1 },
+      { speaker: '會長', text: '2025至2026年度區務委員會周年大會，現在正式開始。', slide: 3 },
+      { speaker: '會長', text: '議程一，通過2025年6月18日舉行之第49屆區務委員會周年大會會議紀錄。', slide: 3 },
+      { speaker: '司儀', text: '大家可以參閱附件一。', slide: 3 },
+      { speaker: '會長', text: '宣佈通過第49屆區務委員會周年大會會議記錄。', slide: 4 },
+      { speaker: '會長', text: '無未了事項，進入議程三。', slide: 5 },
+      { speaker: '會長', text: '宣佈通過2025至2026年度筲箕灣區的區務報告。', slide: 6 },
+      { speaker: '會長', text: '宣佈通過2025至2026年度筲箕灣區的財務報告。', slide: 7 },
+      { speaker: '會長', text: '通過追認區執行委員會批准之2026至2027年度之區財政預算。', slide: 8 },
+      { speaker: '司儀', text: '大家可以參閱附件三。', slide: 8 },
+      { speaker: '會長', text: '議程七，提名及選出2026至2027年度區執行委員會成員。', slide: 9 },
+      { speaker: '會長', text: '確認通過委任楊少銓會計師為2026至2027年度筲箕灣區義務核數師。', slide: 11 },
+      { speaker: '會長', text: '如果無的話，我宣佈周年大會圓滿結束。', slide: 12 },
+      { speaker: '司儀', text: '由工作人員安排拍攝大合照。', slide: 13 }
+    ];
+
+    const state = {
+      step: 0,
+      appMode: 'browser',
+      slidesLoaded: false,
+      scriptLoaded: false,
+      driveConnected: false,
+      cueModes: new Set(['keyword']),
+      cues: [
+        { trigger: '區務委員會周年大會現在正式開始', action: 'goto_slide', target: '3', threshold: 84 },
+        { trigger: '宣佈通過第49屆區務委員會周年大會會議記錄', action: 'goto_slide', target: '4', threshold: 84 },
+        { trigger: '無未了事項進入議程三', action: 'goto_slide', target: '5', threshold: 84 }
+      ]
+    };
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+    }
+
+    function setStep(n) {
+      state.step = Math.max(0, Math.min(steps.length - 1, n));
+      render();
+    }
+
+    function renderProgress() {
+      $('#progress').innerHTML = steps.map((s, i) => {
+        const cls = i === state.step ? 'active' : i < state.step ? 'done' : '';
+        return `<button class="step-pill ${cls}" data-step="${i}">
+          <div class="step-no">${i < state.step ? '✓' : i + 1}</div>
+          <div><div class="step-title">${s.short}</div><div class="step-desc">${s.desc}</div></div>
+        </button>`;
+      }).join('');
+      $$('.step-pill').forEach(btn => btn.addEventListener('click', () => setStep(Number(btn.dataset.step))));
+    }
+
+    function renderHeader() {
+      const s = steps[state.step];
+      $('#pageTitle').textContent = s.title;
+      $('#pageDesc').textContent = s.desc;
+      const modeText = state.appMode === 'browser' ? '純瀏覽器' : 'Google Drive';
+      const sourceText = state.appMode === 'drive'
+        ? (state.driveConnected ? 'Drive 已連接' : 'Drive 未連接')
+        : `${state.slidesLoaded ? 'Slides 已載入' : 'Slides 未載入'} / ${state.scriptLoaded ? 'Script 已載入' : 'Script 未載入'}`;
+      $('#statusBadges').innerHTML = `
+        <span class="badge"><span class="dot ${state.appMode === 'browser' ? 'green' : 'blue'}"></span>${modeText}</span>
+        <span class="badge"><span class="dot ${state.appMode === 'drive' ? (state.driveConnected ? 'green' : 'yellow') : (state.slidesLoaded && state.scriptLoaded ? 'green' : 'yellow')}"></span>${sourceText}</span>
+        <span class="badge">${state.cueModes.size} 種 Cue 模式</span>
+        <span class="badge">${state.cues.length} 個 Cue</span>`;
+    }
+
+    function renderScreens() {
+      $$('.screen').forEach(sec => sec.classList.toggle('active', Number(sec.dataset.screen) === state.step));
+      $$('.choice').forEach(card => card.classList.toggle('selected', card.dataset.appMode === state.appMode));
+      $('#browserSource').style.display = state.appMode === 'browser' ? 'grid' : 'none';
+      $('#driveSource').style.display = state.appMode === 'drive' ? 'grid' : 'none';
+      $$('.mode-card').forEach(card => card.classList.toggle('selected', state.cueModes.has(card.dataset.cueMode)));
+    }
+
+    function renderSource() {
+      $('#slideFilesList').innerHTML = state.slidesLoaded ? `
+        <div class="file-line"><div><b>slides/</b><br><span>13 張圖片：Slide1.png 至 Slide13.png</span></div><span class="green">已載入</span></div>
+        <div class="file-line"><div><b>project.vcue.json</b><br><span>可選：下次重用設定</span></div><span class="muted">未載入</span></div>` : '';
+
+      if (!$('#scriptText').value.trim() && state.scriptLoaded) {
+        $('#scriptText').value = sampleScript.map(x => `${x.speaker}：${x.text}`).join('\n\n');
+      }
+
+      $('#driveFolderList').innerHTML = state.driveConnected ? `
+        <div class="file-line"><div><b>2026 周年大會/</b><br><span>Google Drive 活動資料夾</span></div><span class="green">已選取</span></div>
+        <div class="file-line"><div><b>slides/</b><br><span>13 張 slide 圖片</span></div><span class="green">OK</span></div>
+        <div class="file-line"><div><b>司儀稿.docx</b><br><span>B 檔：逐字稿</span></div><span class="green">OK</span></div>
+        <div class="file-line"><div><b>project.vcue.json</b><br><span>Cue 設定</span></div><span class="green">OK</span></div>` : '';
+    }
+
+    function renderCueTable() {
+      $('#cueTable').innerHTML = state.cues.map((cue, i) => `
+        <tr>
+          <td class="col-order"><b>${i + 1}</b></td>
+          <td><input value="${escapeHtml(cue.trigger)}" data-cue-field="trigger" data-index="${i}" /></td>
+          <td class="col-action">
+            <select data-cue-field="action" data-index="${i}">
+              <option value="goto_slide" ${cue.action === 'goto_slide' ? 'selected' : ''}>跳到頁碼</option>
+              <option value="next_slide" ${cue.action === 'next_slide' ? 'selected' : ''}>下一頁</option>
+              <option value="goto_title" ${cue.action === 'goto_title' ? 'selected' : ''}>跳到標題</option>
+              <option value="confirm" ${cue.action === 'confirm' ? 'selected' : ''}>提示確認</option>
+            </select>
+          </td>
+          <td class="col-target"><input value="${escapeHtml(cue.target)}" data-cue-field="target" data-index="${i}" placeholder="3 / 財務" /></td>
+          <td class="col-threshold"><input type="number" value="${cue.threshold}" min="60" max="98" data-cue-field="threshold" data-index="${i}" /></td>
+          <td class="col-tools"><button class="btn small danger" data-delete-cue="${i}">刪除</button></td>
+        </tr>`).join('');
+
+      $$('[data-cue-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          const idx = Number(input.dataset.index);
+          const field = input.dataset.cueField;
+          state.cues[idx][field] = field === 'threshold' ? Number(input.value) : input.value;
+          updateDerivedOnly();
+        });
+      });
+      $$('[data-delete-cue]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.cues.splice(Number(btn.dataset.deleteCue), 1);
+          render();
+        });
+      });
+    }
+
+    function renderScriptLines() {
+      $('#scriptLines').innerHTML = sampleScript.map((line, i) => `
+        <button class="script-line ${state.cues.some(c => c.trigger === line.text) ? 'marked' : ''}" data-script-index="${i}">
+          <div class="meta"><span>${line.speaker}</span><span>建議目標：第 ${line.slide} 頁</span></div>
+          ${escapeHtml(line.text)}
+        </button>`).join('');
+      $$('[data-script-index]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const line = sampleScript[Number(btn.dataset.scriptIndex)];
+          state.cues.push({ trigger: line.text, action: 'goto_slide', target: String(line.slide), threshold: Number($('#defaultThreshold').value || 84) });
+          render();
+        });
+      });
+    }
+
+    function renderRulePreview() {
+      const items = [];
+      if (state.cueModes.has('keyword')) items.push(['指定句 Cue', '逐個等待 cue 表格內的觸發字眼，命中後執行設定動作。']);
+      if (state.cueModes.has('transcript')) items.push(['逐字稿配對', '只在下一段附近做 sliding alignment，避免突然跳到很後。']);
+      if (state.cueModes.has('titleLock')) items.push(['參閱標題鎖定', '偵測「參閱 / 進入 / 請看」後面的名詞，再與 slide title fuzzy match。']);
+      $('#rulePreview').innerHTML = items.map(x => `<div class="file-line"><div><b>${x[0]}</b><br><span>${x[1]}</span></div><span class="green">ON</span></div>`).join('') || '<p class="muted">未選擇 Cue 模式。</p>';
+    }
+
+    function buildProject() {
+      return {
+        schema: 'voice-cue-slide-project',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        appMode: state.appMode,
+        settings: {
+          triggerMode: $('#triggerMode')?.value || 'sequential',
+          threshold: Number($('#defaultThreshold')?.value || 84),
+          cooldownSeconds: Number($('#cooldown')?.value || 3),
+          cueModes: Array.from(state.cueModes)
+        },
+        sources: state.appMode === 'drive'
+          ? { type: 'google_drive_folder', folderName: '2026 周年大會' }
+          : { type: 'local_browser', slidesFolderHint: 'slides/', scriptHint: '司儀稿.docx' },
+        cues: state.cues.map((c, i) => ({
+          order: i + 1,
+          trigger: c.trigger,
+          action: c.action,
+          target: c.target,
+          threshold: c.threshold
+        })),
+        note: 'Browser 模式下，基於瀏覽器安全限制，Project JSON 只保存設定，不保存本機圖片檔案本身；重用時請再選一次投影片圖片資料夾。'
+      };
+    }
+
+    function applyProject(project) {
+      if (!project || project.schema !== 'voice-cue-slide-project') {
+        throw new Error('這不是有效的 Voice Cue Project JSON');
+      }
+
+      state.appMode = project.appMode === 'drive' ? 'drive' : 'browser';
+
+      const settings = project.settings || {};
+      if (Array.isArray(settings.cueModes) && settings.cueModes.length) {
+        state.cueModes = new Set(settings.cueModes);
+      }
+      if (settings.triggerMode && $('#triggerMode')) $('#triggerMode').value = settings.triggerMode;
+      if (settings.threshold && $('#defaultThreshold')) $('#defaultThreshold').value = String(settings.threshold);
+      if (settings.cooldownSeconds && $('#cooldown')) $('#cooldown').value = String(settings.cooldownSeconds);
+
+      if (Array.isArray(project.cues) && project.cues.length) {
+        state.cues = project.cues.map((c) => ({
+          trigger: c.trigger || c.triggerText || c.trigger_text || '',
+          action: c.action || 'goto_slide',
+          target: String(c.target ?? c.targetSlideNo ?? c.target_slide_no ?? c.targetTitle ?? c.target_title ?? ''),
+          threshold: Number(c.threshold || settings.threshold || 84)
+        })).filter(c => c.trigger);
+      }
+
+      if (state.appMode === 'drive') {
+        state.driveConnected = true;
+        state.slidesLoaded = true;
+        state.scriptLoaded = true;
+      } else {
+        // Project JSON restores settings, but cannot auto-open local files.
+        state.driveConnected = false;
+      }
+    }
+
+    async function importProjectFile(file) {
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const project = JSON.parse(text);
+        applyProject(project);
+        render();
+        alert('已載入 Project JSON。若是純瀏覽器模式，請再選擇投影片圖片資料夾。');
+      } catch (err) {
+        alert(err.message || String(err));
+      } finally {
+        if ($('#projectImportFile')) $('#projectImportFile').value = '';
+      }
+    }
+
+    function openProjectImport() {
+      $('#projectImportFile')?.click();
+    }
+
+    function downloadProjectJSON() {
+      const blob = new Blob([JSON.stringify(buildProject(), null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `project-${new Date().toISOString().slice(0, 10)}.vcue.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderPreview() {
+      $('#metricCues').textContent = String(state.cues.length);
+      $('#metricModes').textContent = String(state.cueModes.size);
+      $('#sumMode').textContent = state.appMode === 'browser' ? 'Browser' : 'Drive';
+      $('#sumCueCount').textContent = String(state.cues.length);
+      $('#sumModeCount').textContent = String(state.cueModes.size);
+      $('#sumSafety').textContent = ($('#triggerMode')?.value || 'sequential').slice(0, 3).toUpperCase();
+
+      const project = buildProject();
+      $('#jsonPreview').textContent = JSON.stringify(project, null, 2);
+    }
+
+    function updateDerivedOnly() {
+      renderHeader();
+      renderPreview();
+    }
+
+    function render() {
+      renderProgress();
+      renderHeader();
+      renderScreens();
+      renderSource();
+      renderCueTable();
+      renderScriptLines();
+      renderRulePreview();
+      renderPreview();
+      $('#prevStepBtn').disabled = state.step === 0;
+      $('#nextStepBtn').textContent = state.step === steps.length - 1 ? '回到開始' : '下一步 →';
+      $('#currentStepBadge').textContent = `Step ${state.step + 1} / ${steps.length}`;
+    }
+
+    function norm(s) {
+      return String(s).toLowerCase().replace(/[\s\t\n\r,，。.!！?？:：;；、\-—_()（）\[\]【】「」『』《》〈〉"'‘’“”\/\\]+/g, '');
+    }
+    function score(cue, heard) {
+      const a = norm(cue), b = norm(heard);
+      if (!a || !b) return 0;
+      if (b.includes(a) || a.includes(b)) return 100;
+      let hit = 0;
+      for (const ch of a) if (b.includes(ch)) hit++;
+      return Math.round(100 * hit / a.length);
+    }
+    function logDemo(msg) {
+      const box = $('#demoLog');
+      const time = new Date().toLocaleTimeString('zh-HK', { hour12: false });
+      box.textContent += `[${time}] ${msg}\n`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // Events
+    $$('.choice').forEach(card => card.addEventListener('click', () => { state.appMode = card.dataset.appMode; render(); }));
+    $$('[data-goto]').forEach(btn => btn.addEventListener('click', () => setStep(Number(btn.dataset.goto))));
+    $('#prevStepBtn').addEventListener('click', () => setStep(state.step - 1));
+    $('#nextStepBtn').addEventListener('click', () => state.step === steps.length - 1 ? setStep(0) : setStep(state.step + 1));
+    $('#projectImportFile').addEventListener('change', (e) => importProjectFile(e.target.files && e.target.files[0]));
+    $('#importProjectBtn').addEventListener('click', openProjectImport);
+    $('#importProjectHeroBtn').addEventListener('click', openProjectImport);
+    $('#importProjectStepBtn').addEventListener('click', openProjectImport);
+    $('#resetBtn').addEventListener('click', () => location.reload());
+    $('#mockUploadSlides').addEventListener('click', () => { state.slidesLoaded = true; render(); });
+    $('#mockUploadScript').addEventListener('click', () => { state.scriptLoaded = true; $('#scriptText').value = sampleScript.map(x => `${x.speaker}：${x.text}`).join('\n\n'); render(); });
+    $('#mockConnectDrive').addEventListener('click', () => { state.driveConnected = true; state.slidesLoaded = true; state.scriptLoaded = true; render(); });
+
+    $$('.mode-card').forEach(card => card.addEventListener('click', () => {
+      const m = card.dataset.cueMode;
+      if (state.cueModes.has(m)) {
+        if (state.cueModes.size > 1) state.cueModes.delete(m);
+      } else state.cueModes.add(m);
+      render();
+    }));
+
+    $('#addCueBtn').addEventListener('click', () => {
+      state.cues.push({ trigger: '請輸入觸發句子', action: 'goto_slide', target: String(Math.min(13, state.cues.length + 3)), threshold: Number($('#defaultThreshold').value || 84) });
+      render();
+    });
+    $('#autoSuggestBtn').addEventListener('click', () => {
+      state.cues = sampleScript
+        .filter(x => /正式開始|宣佈通過|無未了事項|議程七|圓滿結束|大合照/.test(x.text))
+        .map(x => ({ trigger: x.text, action: 'goto_slide', target: String(x.slide), threshold: Number($('#defaultThreshold').value || 84) }));
+      render();
+    });
+    ['triggerMode', 'defaultThreshold', 'cooldown'].forEach(id => {
+      document.addEventListener('input', e => { if (e.target && e.target.id === id) updateDerivedOnly(); });
+      document.addEventListener('change', e => { if (e.target && e.target.id === id) render(); });
+    });
+
+    $('#simulateHeardBtn').addEventListener('click', () => {
+      const heard = $('#heardInput').value;
+      let best = null;
+      state.cues.forEach((c, i) => {
+        const s = score(c.trigger, heard);
+        if (!best || s > best.score) best = { cue: c, index: i, score: s };
+      });
+      logDemo(`🗣️ 聽到：${heard}`);
+      if (best && best.score >= Number($('#defaultThreshold').value || 84)) {
+        logDemo(`✅ 命中 Cue #${best.index + 1}｜分數 ${best.score}｜動作 ${best.cue.action} → ${best.cue.target}`);
+        $('#previewLabel').textContent = `Slide ${best.cue.target} / 13`;
+        $('#mockSlideTitle').textContent = best.cue.action === 'next_slide' ? '下一頁' : `第 ${best.cue.target} 頁`;
+        $('#mockSlideText').textContent = best.cue.trigger;
+      } else {
+        logDemo(`⚠️ 未達門檻｜最佳分數 ${best ? best.score : 0}`);
+      }
+    });
+    $('#clearLogBtn').addEventListener('click', () => $('#demoLog').textContent = '');
+    $('#downloadJsonBtn').addEventListener('click', downloadProjectJSON);
+    $('#copyJsonBtn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText($('#jsonPreview').textContent);
+        alert('已複製 JSON');
+      } catch (_) {
+        alert('瀏覽器不允許複製，請手動選取。');
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

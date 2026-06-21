@@ -1,0 +1,11 @@
+{
+  "name": "voice-cue-slide-tool-static",
+  "version": "0.2.0",
+  "private": true,
+  "description": "No-install browser-based voice cue slide player MVP for GitHub + Vercel",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "mkdir -p dist && cp index.html styles.css app.js sample_cues_50th.csv sample_project.vcue.json README.md DEPLOYMENT.md PRODUCT_PLAN.md GOOGLE_DRIVE_PHASE2.md VERCEL_GITHUB_DEPLOYMENT.md vercel.json dist/",
+    "start": "python -m http.server 3000"
+  }
+}
