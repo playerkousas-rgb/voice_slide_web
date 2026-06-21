@@ -8,6 +8,7 @@
     "defaultThreshold": 84,
     "cooldownSeconds": 3,
     "titleWindow": 8,
+    "slideFitMode": "contain",
     "cueModes": ["keyword", "titleLock"]
   },
   "slideTitles": [

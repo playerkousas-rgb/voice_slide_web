@@ -33,6 +33,7 @@ const state = {
   appMode: 'browser',
   slides: [],
   currentSlide: 1,
+  slideFitMode: 'contain',
   slideTitles: [],
   scriptText: '',
   scriptLines: [],
@@ -227,6 +228,11 @@ function actionText(c) {
   return `第 ${c.target} 頁`;
 }
 function renderStage() {
+  const stage = $('#stage');
+  if (stage) {
+    stage.classList.remove('fit-contain', 'fit-cover', 'fit-fill');
+    stage.classList.add('fit-' + (state.slideFitMode || 'contain'));
+  }
   const img = $('#slideImage'), ph = $('#slidePlaceholder');
   const total = state.slides.length;
   const cur = total ? Math.max(1, Math.min(state.currentSlide, total)) : 0;
@@ -366,7 +372,7 @@ function exportCueCsv() {
 function buildProject() {
   return {
     schema: 'voice-cue-slide-project', version: 1, exportedAt: new Date().toISOString(), appMode: state.appMode,
-    settings: { triggerMode: getTriggerMode(), speechLang: $('#speechLang')?.value || 'zh-HK', defaultThreshold: getThreshold(), cooldownSeconds: Number($('#cooldownSeconds')?.value || 3), titleWindow: Number($('#titleWindow')?.value || 8), cueModes: Array.from(state.cueModes) },
+    settings: { triggerMode: getTriggerMode(), speechLang: $('#speechLang')?.value || 'zh-HK', defaultThreshold: getThreshold(), cooldownSeconds: Number($('#cooldownSeconds')?.value || 3), titleWindow: Number($('#titleWindow')?.value || 8), slideFitMode: state.slideFitMode || 'contain', cueModes: Array.from(state.cueModes) },
     slideTitles: state.slideTitles.map((title, i) => ({ slideNo: i + 1, title })),
     scriptText: state.scriptText,
     cues: state.cues.map((c, i) => ({ order: i + 1, enabled: c.enabled !== false, trigger: c.trigger, action: c.action, target: c.target, threshold: c.threshold || getThreshold() })),
@@ -382,6 +388,8 @@ function applyProject(project) {
   if (s.defaultThreshold && $('#defaultThreshold')) $('#defaultThreshold').value = String(s.defaultThreshold);
   if (s.cooldownSeconds && $('#cooldownSeconds')) $('#cooldownSeconds').value = String(s.cooldownSeconds);
   if (s.titleWindow && $('#titleWindow')) $('#titleWindow').value = String(s.titleWindow);
+  if (s.slideFitMode) state.slideFitMode = ['contain', 'cover', 'fill'].includes(s.slideFitMode) ? s.slideFitMode : 'contain';
+  if ($('#slideFitMode')) $('#slideFitMode').value = state.slideFitMode;
   if (Array.isArray(s.cueModes) && s.cueModes.length) state.cueModes = new Set(s.cueModes);
   if (Array.isArray(project.cues)) state.cues = project.cues.map(c => ({ enabled: c.enabled !== false, trigger: c.trigger || c.triggerText || '', action: c.action || 'goto_slide', target: String(c.target ?? c.targetSlideNo ?? ''), threshold: Number(c.threshold || s.defaultThreshold || 84) })).filter(c => c.trigger);
   if (Array.isArray(project.slideTitles)) project.slideTitles.forEach(x => { if (x.slideNo) state.slideTitles[x.slideNo - 1] = x.title || ''; });
@@ -533,6 +541,18 @@ function startListening() {
 }
 function stopListening() { state.listening = false; if (state.recognition) { try { state.recognition.stop(); } catch (_) {} } state.recognition = null; log('已停止聆聽'); render(); }
 function toggleFullscreen() { const st = $('#stage'); if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else st.requestFullscreen().catch(err => log(err.message || String(err), 'warn')); }
+function setProjectorMode(on) {
+  document.body.classList.toggle('projector-mode', !!on);
+  if (on) {
+    if (state.step !== 4) state.step = 4;
+    log('已進入投影模式。建議再按 F11 隱藏瀏覽器工具列；按 P 或 Esc 離開投影模式。', 'ok');
+  } else {
+    document.body.classList.remove('show-overlay');
+    log('已離開投影模式');
+  }
+  render();
+}
+function toggleProjectorMode() { setProjectorMode(!document.body.classList.contains('projector-mode')); }
 
 function wireEvents() {
   $$('.choice').forEach(c => c.addEventListener('click', () => { state.appMode = c.dataset.appMode; render(); }));
@@ -569,6 +589,15 @@ function wireEvents() {
   $('#prevSlideBtn').addEventListener('click', prevSlide);
   $('#nextSlideBtn').addEventListener('click', nextSlide);
   $('#fullscreenBtn').addEventListener('click', toggleFullscreen);
+  $('#projectorModeBtn').addEventListener('click', toggleProjectorMode);
+  $('#stage').addEventListener('mousemove', () => {
+    if (document.body.classList.contains('projector-mode')) {
+      document.body.classList.add('show-overlay');
+      clearTimeout(window.__vcOverlayTimer);
+      window.__vcOverlayTimer = setTimeout(() => document.body.classList.remove('show-overlay'), 1600);
+    }
+  });
+  $('#slideFitMode').addEventListener('change', e => { state.slideFitMode = e.target.value; renderStage(); renderProjectPreview(); });
   $('#startListenBtn').addEventListener('click', startListening);
   $('#stopListenBtn').addEventListener('click', stopListening);
   $('#resetCueProgressBtn').addEventListener('click', () => { state.cueIndex = 0; state.scriptIndex = 0; state.lastTriggerAt = 0; log('已重設 cue 進度', 'ok'); render(); });
@@ -579,7 +608,9 @@ function wireEvents() {
     if (['input','textarea','select'].includes(tag)) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+    else if (e.key === 'Escape' && document.body.classList.contains('projector-mode')) { e.preventDefault(); setProjectorMode(false); }
     else if (e.key.toLowerCase() === 'f') { e.preventDefault(); toggleFullscreen(); }
+    else if (e.key.toLowerCase() === 'p') { e.preventDefault(); toggleProjectorMode(); }
     else if (e.key === ' ') { e.preventDefault(); state.listening ? stopListening() : startListening(); }
     else if (/^[0-9]$/.test(e.key)) { state.numberBuffer = (state.numberBuffer + e.key).slice(-4); log(`頁碼輸入：${state.numberBuffer}`); }
     else if (e.key === 'Enter' && state.numberBuffer) { const n = Number(state.numberBuffer); state.numberBuffer = ''; gotoSlide(n, '鍵盤頁碼'); }

@@ -206,7 +206,7 @@
           <div class="card">
             <div class="card-head">
               <div><h3>放映 / 彩排</h3><p>按「開始聆聽」後，Chrome/Edge 會要求咪高峰權限。Vercel 是 HTTPS，可使用 microphone。</p></div>
-              <div class="row"><button class="btn small" id="prevSlideBtn">上一頁</button><button class="btn small" id="nextSlideBtn">下一頁</button><button class="btn small primary" id="fullscreenBtn">全螢幕</button></div>
+              <div class="row"><select id="slideFitMode" class="compact-select" title="投影片顯示方式"><option value="contain" selected>適應畫面｜不裁切</option><option value="cover">填滿畫面｜可裁切</option><option value="fill">拉伸填滿｜會變形</option></select><button class="btn small" id="prevSlideBtn">上一頁</button><button class="btn small" id="nextSlideBtn">下一頁</button><button class="btn small" id="projectorModeBtn">投影模式/F11</button><button class="btn small primary" id="fullscreenBtn">全螢幕</button></div>
             </div>
             <div class="card-body stack">
               <div class="stage" id="stage">
