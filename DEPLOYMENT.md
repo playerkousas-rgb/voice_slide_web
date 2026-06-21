@@ -50,13 +50,25 @@ Build Command: 留空
 Output Directory: .
 ```
 
-最簡單建議：
+最簡單建議之一：
+
+```txt
+Root Directory: voice_slide_web
+Build Command: npm run build
+Output Directory: public
+```
+
+這個 repo 的 `package.json` 會把網站檔案複製到 `public/`，配合 Vercel 預設的 `public` Output Directory。
+
+如果你不想跑 build，也可以改用：
 
 ```txt
 Root Directory: voice_slide_web
 Build Command: 留空
 Output Directory: .
 ```
+
+但若 Vercel 已自動偵測到 `npm run build`，就請用 `Output Directory: public`。
 
 ## 3. 部署後測試
 

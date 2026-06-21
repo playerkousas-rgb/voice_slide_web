@@ -60,15 +60,17 @@ http://localhost:3000
 DEPLOYMENT.md
 ```
 
-最簡單：
+建議設定：
 
 ```txt
 Vercel → Import GitHub Repository
 Root Directory: voice_slide_web
 Framework Preset: Other
-Build Command: 留空
-Output Directory: .
+Build Command: npm run build
+Output Directory: public
 ```
+
+如果你把 Build Command 留空，Output Directory 才使用 `.`。若 Vercel 自動執行 `npm run build`，請用 `public`。
 
 ---
 
