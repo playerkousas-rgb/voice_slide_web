@@ -50,6 +50,7 @@ const state = {
   lastTriggerAt: 0,
   pendingAction: null,
   lastHeard: '',
+  lastSlideImport: null,
   numberBuffer: ''
 };
 
@@ -142,7 +143,9 @@ function renderSlides() {
   if (list) {
     list.innerHTML = state.slides.length
       ? state.slides.slice(0, 40).map(s => `<div class="file-line"><div><b>#${s.slideNo} ${escapeHtml(s.name)}</b><br><span>${escapeHtml(state.slideTitles[s.slideNo - 1] || '')}</span></div><span class="green">OK</span></div>`).join('') + (state.slides.length > 40 ? `<div class="file-line"><div><b>⋯</b><br><span>共 ${state.slides.length} 張</span></div></div>` : '')
-      : '<div class="file-line"><div><b>未載入</b><br><span>請選擇投影片圖片資料夾</span></div><span class="yellow">待設定</span></div>';
+      : (state.lastSlideImport && state.lastSlideImport.selected
+        ? `<div class="file-line"><div><b>未載入任何圖片</b><br><span>剛才選了 ${state.lastSlideImport.selected} 個項目，但沒有可讀取的 PNG/JPG/WebP/GIF/BMP。例子：${escapeHtml(state.lastSlideImport.examples || '沒有檔名')}</span></div><span class="red">0 張</span></div>`
+        : '<div class="file-line"><div><b>未載入</b><br><span>請選擇投影片圖片資料夾，或手動選擇多個 PNG/JPG 檔。</span></div><span class="yellow">待設定</span></div>');
   }
   const titleList = $('#slideTitleList');
   if (titleList) {
@@ -248,15 +251,59 @@ function render() {
   $('#stepBadge').textContent = `Step ${state.step + 1} / ${steps.length}`;
 }
 
-function loadSlideFiles(fileList) {
-  const files = Array.from(fileList || []).filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.name));
+function isLikelyImageFile(file) {
+  const name = String(file && file.name || '');
+  const type = String(file && file.type || '').toLowerCase();
+  return /^image\//.test(type) || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(name);
+}
+function loadSlideFiles(fileList, source = '檔案選擇') {
+  const selected = Array.from(fileList || []);
+  const files = selected.filter(isLikelyImageFile);
   files.sort((a,b) => naturalCompare(a.webkitRelativePath || a.name, b.webkitRelativePath || b.name));
+  state.lastSlideImport = {
+    source,
+    selected: selected.length,
+    loaded: files.length,
+    examples: selected.slice(0, 5).map(f => `${f.name || '(無檔名)'}${f.type ? ' [' + f.type + ']' : ''}`).join('、')
+  };
   state.slides.forEach(s => { try { URL.revokeObjectURL(s.url); } catch (_) {} });
   state.slides = files.map((file, i) => ({ slideNo: i + 1, name: file.webkitRelativePath || file.name, url: URL.createObjectURL(file) }));
   state.slideTitles = state.slides.map((s, i) => state.slideTitles[i] || stripExt(s.name).replace(/^.*[\\/]/, ''));
   state.currentSlide = state.slides.length ? 1 : 0;
-  log(`已載入 ${state.slides.length} 張投影片圖片`, state.slides.length ? 'ok' : 'warn');
+  if (files.length) {
+    log(`已由「${source}」載入 ${files.length} 張投影片圖片`, 'ok');
+  } else {
+    log(`未能由「${source}」讀取圖片。選到 ${selected.length} 個項目；請確認是已解壓的 PNG/JPG 圖片，而不是 zip/pdf/pptx。`, 'warn');
+    if (selected.length) alert(`未讀到任何圖片。\n\n你剛才選了 ${selected.length} 個項目，但它們不是可讀的 PNG/JPG/WebP/GIF/BMP，或瀏覽器沒有提供檔案。\n\n檔案例子：${state.lastSlideImport.examples || '沒有'}\n\n請嘗試：\n1. 用 Chrome / Edge 桌面版\n2. 將 Canva zip 先解壓\n3. 用「方法 B」手動選擇多個 PNG 檔\n4. 不要直接選 Google Drive 網頁內的檔，請先同步/下載到本機。`);
+  }
   render();
+}
+
+function readEntry(entry) {
+  return new Promise(resolve => {
+    if (!entry) return resolve([]);
+    if (entry.isFile) {
+      entry.file(file => resolve([file]), () => resolve([]));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const all = [];
+      const readBatch = () => reader.readEntries(async entries => {
+        if (!entries.length) return resolve(all.flat());
+        const nested = await Promise.all(entries.map(readEntry));
+        all.push(...nested);
+        readBatch();
+      }, () => resolve(all.flat()));
+      readBatch();
+    } else resolve([]);
+  });
+}
+async function filesFromDrop(dataTransfer) {
+  const items = Array.from(dataTransfer.items || []);
+  if (items.length && items[0].webkitGetAsEntry) {
+    const nested = await Promise.all(items.map(item => readEntry(item.webkitGetAsEntry())));
+    return nested.flat();
+  }
+  return Array.from(dataTransfer.files || []);
 }
 function parseScript(text) {
   state.scriptText = String(text || '');
@@ -497,8 +544,14 @@ function wireEvents() {
   $('#downloadProjectTopBtn').addEventListener('click', downloadProject);
   $('#downloadProjectBtn').addEventListener('click', downloadProject);
   $('#copyProjectBtn').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(buildProject(), null, 2)); alert('已複製 Project JSON'); } catch (_) { alert('未能複製，請手動選取。'); } });
-  $('#slideFolderInput').addEventListener('change', e => loadSlideFiles(e.target.files));
-  $('#slideFilesInput').addEventListener('change', e => loadSlideFiles(e.target.files));
+  $('#slideFolderInput').addEventListener('change', e => loadSlideFiles(e.target.files, '資料夾選擇'));
+  $('#slideFilesInput').addEventListener('change', e => loadSlideFiles(e.target.files, '手動多檔選擇'));
+  const slideDropZone = $('#slideDropZone');
+  if (slideDropZone) {
+    ['dragenter', 'dragover'].forEach(evt => slideDropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); slideDropZone.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(evt => slideDropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); slideDropZone.classList.remove('dragover'); }));
+    slideDropZone.addEventListener('drop', async e => loadSlideFiles(await filesFromDrop(e.dataTransfer), '拖放'));
+  }
   $('#scriptFileInput').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; if (f) { const text = await f.text(); $('#scriptText').value = text; parseScript(text); } });
   $('#parseScriptBtn').addEventListener('click', () => parseScript($('#scriptText').value));
   $('#loadSampleBtn').addEventListener('click', () => { $('#scriptText').value = sampleScript; parseScript(sampleScript); });

@@ -93,11 +93,13 @@
                 <span class="badge"><span class="dot blue"></span>Slides</span>
               </div>
               <div class="card-body stack">
-                <div class="dropzone">
-                  <strong>選擇投影片圖片資料夾</strong>
-                  <p>PowerPoint 匯出通常是 <code>Slide1.PNG</code>、<code>Slide2.PNG</code>……；Canva 下載 zip 後請先解壓。</p>
-                  <input id="slideFolderInput" type="file" accept="image/*" webkitdirectory directory multiple />
-                  <input id="slideFilesInput" type="file" accept="image/*" multiple />
+                <div class="dropzone" id="slideDropZone">
+                  <strong>選擇或拖放投影片圖片</strong>
+                  <p>PowerPoint 匯出通常是 <code>Slide1.PNG</code>、<code>Slide2.PNG</code>……；Canva 下載 zip 後請先解壓。你也可以將 PNG/JPG 檔案或整個資料夾拖到這裡。</p>
+                  <label>方法 A：選擇整個 slides 資料夾</label>
+                  <input id="slideFolderInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/bmp,.png,.jpg,.jpeg,.webp,.gif,.bmp" webkitdirectory directory multiple />
+                  <label>方法 B：手動選擇多個 PNG/JPG 檔</label>
+                  <input id="slideFilesInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/bmp,.png,.jpg,.jpeg,.webp,.gif,.bmp" multiple />
                 </div>
                 <div class="file-list" id="slideList"></div>
               </div>
