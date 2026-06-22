@@ -120,3 +120,46 @@ Output Directory: public
 - 保留人手 clicker / 鍵盤作後備。
 - 最好由現場 mixer / USB audio interface 輸入電腦，不要只靠 notebook 內置咪。
 - 完整彩排一次後再正式使用。
+
+---
+
+## Sequential / Smart Sequential / Any 分別
+
+- **Sequential**：只等待 Cue Builder 內「下一個」啟用 cue。若目前等 cue #1，你說 cue #3，系統不會跳。正式活動最安全。
+- **Smart Sequential**：只搜尋目前及之後的 cue。若 cue #1 漏聽，但現場已講到 cue #3，系統可直接跳到 cue #3，並把進度推前。彩排和半自動正式場合較方便。
+- **Any**：任何 cue 命中都可跳，包括跳回前面。測試方便，但正式活動較易誤觸。
+
+如果語音 log 顯示「聽到：程序一」但不跳，常見原因是 Sequential 正在等待另一個 cue。可暫時改用 Smart Sequential 或 Any 測試。系統亦已把「程序 / 程式 / 日程」視作「議程」的常見辨識替代。
+
+---
+
+## Cue 別名 / 多個講法
+
+Cue Builder 的「觸發字眼 / 句子」可以用 `|` 分隔多個講法，例如：
+
+```txt
+議程一|程序一|議程一通過上次會議紀錄
+```
+
+系統會逐個別名配對，只要其中一個命中就會觸發同一個動作。這對廣東話辨識很有用，因為「議程」有時會被聽成「程序 / 程式 / 流程」。
+
+如果 Log 顯示已聽到句子但「未觸發」，請看 Log 內的分數，例如 `keyword 72/84`。可嘗試：
+
+1. 降低該 cue 門檻，例如 84 → 72
+2. 加入辨識出來的講法作別名
+3. 使用 Smart Sequential 測試
+4. Cue 不要太長；可用「議程一|程序一」這種短別名配合完整句
+
+---
+
+## Interim 即時辨識
+
+Chrome / Edge 語音辨識有時會先在畫面顯示正確文字，例如「議程一」，但遲遲未送出 final result。舊版只會在 final result 時觸發，所以會出現「畫面看到讀準，但不跳」的情況。
+
+新版加入了高信心 interim matching：如果辨識中文字穩定約 0.65 秒，而且分數足夠高，系統會先觸發。這對「議程一」「附件二」這類短 cue 特別有用。
+
+如果仍然不跳，請看 Log：
+
+- 只有右下角看到字、Log 沒有「聽到」：可能仍是 interim / browser 語音結果未完成。
+- Log 有「未觸發｜最佳 keyword xx/yy」：matching 分數不足，請降低門檻或加 cue 別名。
+- Log 有「未載入投影片」：已命中但沒有 slides 可跳。

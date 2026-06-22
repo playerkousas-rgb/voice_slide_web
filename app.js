@@ -51,6 +51,7 @@ const state = {
   lastTriggerAt: 0,
   pendingAction: null,
   lastHeard: '',
+  interimTimer: null,
   lastSlideImport: null,
   numberBuffer: ''
 };
@@ -71,6 +72,9 @@ function stripExt(name) { return String(name).replace(/\.[^.]+$/, ''); }
 function normalizeText(text, loose = false) {
   let t = String(text || '').toLowerCase();
   t = t.replace(/[０-９]/g, d => String.fromCharCode(d.charCodeAt(0) - 0xFEE0));
+  // Common Cantonese/HK STT substitutions for meeting agendas.
+  // e.g. 「議程一」 is often recognised as 「程序一」 or 「程式一」.
+  t = t.replace(/程序/g, '議程').replace(/程式/g, '議程').replace(/日程/g, '議程').replace(/流程/g, '議程');
   t = t.replace(/[\s\t\n\r,，。.!！?？:：;；、\-—_()（）\[\]【】「」『』《》〈〉"'‘’“”\/\\]+/g, '');
   if (loose) t = t.replace(/[0-9零〇一二三四五六七八九十百千萬兩第屆年月日號年度至]/g, '');
   return t;
@@ -96,7 +100,14 @@ function matchScore(cue, spoken) {
   function one(a, b) {
     if (!a || !b) return 0;
     if (b.includes(a)) return 100;
-    if (a.includes(b) && b.length >= Math.min(6, Math.ceil(a.length * 0.55))) return Math.min(96, Math.round(78 + 18 * (b.length / a.length)));
+    if (a.includes(b)) {
+      const enoughCoverage = b.length >= Math.min(6, Math.ceil(a.length * 0.55));
+      const agendaAnchor = /(?:議程|附件)[一二三四五六七八九十0-9]?/.test(b) && b.length >= 3;
+      const usefulShortCue = b.length >= 4;
+      if (enoughCoverage) return Math.min(96, Math.round(78 + 18 * (b.length / a.length)));
+      if (agendaAnchor) return 92;
+      if (usefulShortCue) return 88;
+    }
     return lcsScore(a, b);
   }
   return Math.max(one(a1, b1), one(a2, b2) - 4);
@@ -203,7 +214,7 @@ function updateCueFromInput(e) {
 function renderRules() {
   const box = $('#rulePreview'); if (!box) return;
   const items = [];
-  if (state.cueModes.has('keyword')) items.push(['指定句 Cue', '真正跳頁主要由 Cue Builder 表格控制。Sequential 模式只等待下一個啟用 cue。']);
+  if (state.cueModes.has('keyword')) items.push(['指定句 Cue', '真正跳頁主要由 Cue Builder 表格控制。Sequential 只等待下一個；Smart Sequential 可跳到之後的 cue。']);
   if (state.cueModes.has('transcript')) items.push(['逐字稿配對', '系統會在下一段稿附近尋找最接近內容，更新 script position；如命中 cue 亦可觸發。']);
   if (state.cueModes.has('titleLock')) items.push(['參閱標題鎖定', '偵測「參閱 / 進入 / 請看」後面的標題，與 slide title 做 fuzzy match。']);
   box.innerHTML = items.map(([a,b]) => `<div class="file-line"><div><b>${a}</b><br><span>${b}</span></div><span class="green">ON</span></div>`).join('') || '<p class="muted">未選任何 cue 模式。</p>';
@@ -211,11 +222,12 @@ function renderRules() {
 function currentCueText() {
   if (!state.cues.length) return '下一個 cue：未設定';
   const mode = getTriggerMode();
-  if (mode === 'sequential') {
+  if (mode === 'sequential' || mode === 'smart') {
     const idx = nextEnabledCueIndex(state.cueIndex);
     if (idx < 0) return '所有 cue 已完成';
     const c = state.cues[idx];
-    return `下一個 cue #${idx + 1}：${c.trigger} → ${actionText(c)}`;
+    const prefix = mode === 'smart' ? 'Smart｜下一個' : '下一個';
+    return `${prefix} cue #${idx + 1}：${c.trigger} → ${actionText(c)}`;
   }
   if (mode === 'confirm') return `Confirm 模式：命中後需確認｜${enabledCues().length} 個 cue`;
   return `Any 模式：${enabledCues().length} 個 cue 任一命中可觸發`;
@@ -226,6 +238,12 @@ function actionText(c) {
   if (c.action === 'goto_title') return `標題：${c.target}`;
   if (c.action === 'confirm') return `提示確認：${c.target || '下一頁'}`;
   return `第 ${c.target} 頁`;
+}
+function triggerAlternatives(trigger) {
+  return String(trigger || '')
+    .split(/[|｜；;]/)
+    .map(x => x.trim())
+    .filter(Boolean);
 }
 function renderStage() {
   const stage = $('#stage');
@@ -444,21 +462,28 @@ function renderPending() {
   const c = state.pendingAction.cue;
   box.classList.add('show');
   box.innerHTML = `<div><strong>等待確認：</strong>${escapeHtml(c.trigger)}<br><span class="small">動作：${escapeHtml(actionText(c))}</span></div><div class="row"><button class="btn small primary" id="confirmPendingBtn">確認跳頁</button><button class="btn small" id="cancelPendingBtn">取消</button></div>`;
-  $('#confirmPendingBtn').addEventListener('click', () => { const pending = state.pendingAction; state.pendingAction = null; renderPending(); const cue = { ...pending.cue }; if (cue.action === 'confirm') cue.action = cue.target ? 'goto_slide' : 'next_slide'; const ok = executeAction(cue, pending.source + '｜確認'); if (ok === true) { state.lastTriggerAt = Date.now(); if (getTriggerMode() === 'sequential' && Number.isInteger(pending.cue.index) && pending.cue.index === state.cueIndex) state.cueIndex = pending.cue.index + 1; renderStage(); renderProjectPreview(); } });
+  $('#confirmPendingBtn').addEventListener('click', () => { const pending = state.pendingAction; state.pendingAction = null; renderPending(); const cue = { ...pending.cue }; if (cue.action === 'confirm') cue.action = cue.target ? 'goto_slide' : 'next_slide'; const ok = executeAction(cue, pending.source + '｜確認'); if (ok === true) { state.lastTriggerAt = Date.now(); const mode = getTriggerMode(); if (Number.isInteger(pending.cue.index) && ((mode === 'sequential' && pending.cue.index === state.cueIndex) || (mode === 'smart' && pending.cue.index >= state.cueIndex))) state.cueIndex = pending.cue.index + 1; renderStage(); renderProjectPreview(); } });
   $('#cancelPendingBtn').addEventListener('click', () => { state.pendingAction = null; renderPending(); log('已取消 pending action', 'warn'); });
 }
 
 function findKeywordMatch(transcripts) {
   if (!state.cueModes.has('keyword')) return null;
   let candidates;
-  if (getTriggerMode() === 'sequential') {
+  const mode = getTriggerMode();
+  if (mode === 'sequential') {
     const idx = nextEnabledCueIndex(state.cueIndex);
     candidates = idx >= 0 ? [{ ...state.cues[idx], index: idx }] : [];
+  } else if (mode === 'smart') {
+    // Search current and future cues only. This keeps order safety but allows recovery
+    // if an earlier cue was missed or the operator starts testing from a later agenda.
+    candidates = state.cues.map((c, i) => ({ ...c, index: i })).filter(c => c.enabled !== false && c.index >= state.cueIndex);
   } else candidates = enabledCues();
   let best = null;
   for (const cue of candidates) for (const spoken of transcripts) {
-    const s = matchScore(cue.trigger, spoken);
-    if (!best || s > best.score) best = { type: 'keyword', cue, index: cue.index, spoken, score: s };
+    for (const alt of triggerAlternatives(cue.trigger)) {
+      const s = matchScore(alt, spoken);
+      if (!best || s > best.score) best = { type: 'keyword', cue, index: cue.index, spoken, score: s, matchedText: alt };
+    }
   }
   return best;
 }
@@ -489,25 +514,36 @@ function findTitleLockMatch(transcripts) {
   }
   return best;
 }
-function processTranscripts(transcripts) {
+function processTranscripts(transcripts, source = 'final', quiet = false) {
   transcripts = transcripts.filter(Boolean); if (!transcripts.length) return;
-  state.lastHeard = transcripts.join(' / '); $('#overlayHeard').textContent = state.lastHeard; log(`聽到：${state.lastHeard}`, 'listen');
-  if (Date.now() - state.lastTriggerAt < getCooldownMs()) { log('冷卻中，略過', 'warn'); return; }
+  state.lastHeard = transcripts.join(' / '); $('#overlayHeard').textContent = state.lastHeard;
+  if (!quiet) log(`聽到：${state.lastHeard}`, 'listen');
+  if (Date.now() - state.lastTriggerAt < getCooldownMs()) { if (!quiet) log('冷卻中，略過', 'warn'); return; }
   updateTranscriptPosition(transcripts);
   const keyword = findKeywordMatch(transcripts), titleLock = findTitleLockMatch(transcripts);
   let chosen = null;
-  if (keyword && keyword.score >= (keyword.cue.threshold || getThreshold())) chosen = keyword;
-  else if (titleLock && titleLock.score >= getThreshold()) chosen = titleLock;
+  const keywordNeeded = keyword ? (source === 'interim' ? Math.min(96, (keyword.cue.threshold || getThreshold()) + 6) : (keyword.cue.threshold || getThreshold())) : 0;
+  const titleNeeded = source === 'interim' ? Math.min(96, getThreshold() + 6) : getThreshold();
+  if (keyword && keyword.score >= keywordNeeded) chosen = keyword;
+  else if (titleLock && titleLock.score >= titleNeeded) chosen = titleLock;
   if (!chosen) {
-    const scores = [];
-    if (keyword) scores.push(`keyword ${keyword.score}/${keyword.cue.threshold || getThreshold()}`);
-    if (titleLock) scores.push(`title ${titleLock.score}/${getThreshold()}「${titleLock.phrase}」→ ${titleLock.title}`);
-    log(`未觸發${scores.length ? '｜最佳 ' + scores.join('；') : ''}`); return;
+    if (!quiet) {
+      const scores = [];
+      if (keyword) scores.push(`keyword ${keyword.score}/${keywordNeeded}｜等待 Cue #${keyword.index + 1}「${keyword.matchedText || keyword.cue.trigger}」`);
+      if (titleLock) scores.push(`title ${titleLock.score}/${titleNeeded}「${titleLock.phrase}」→ ${titleLock.title}`);
+      log(`未觸發${scores.length ? '｜最佳 ' + scores.join('；') : ''}`);
+    }
+    return;
   }
+  if (quiet) log(`即時辨識命中前文字：${state.lastHeard}`, 'listen');
   if (chosen.type === 'keyword') {
-    log(`命中 Cue #${chosen.index + 1}｜分數 ${chosen.score}｜${chosen.cue.trigger}`, 'ok');
+    log(`命中 Cue #${chosen.index + 1}｜分數 ${chosen.score}｜匹配「${chosen.matchedText || chosen.cue.trigger}」｜原 cue：${chosen.cue.trigger}`, 'ok');
     const ok = executeAction(chosen.cue, `語音 Cue #${chosen.index + 1}`);
-    if (ok === true) { state.lastTriggerAt = Date.now(); if (getTriggerMode() === 'sequential' && chosen.index === state.cueIndex) state.cueIndex = chosen.index + 1; }
+    if (ok === true) {
+      state.lastTriggerAt = Date.now();
+      const mode = getTriggerMode();
+      if ((mode === 'sequential' && chosen.index === state.cueIndex) || (mode === 'smart' && chosen.index >= state.cueIndex)) state.cueIndex = chosen.index + 1;
+    }
     else if (ok === 'pending') { state.lastTriggerAt = Date.now(); }
   } else {
     const cue = { trigger: `參閱/標題鎖定：${chosen.phrase}`, action: 'goto_slide', target: String(chosen.slide), threshold: getThreshold() };
@@ -533,8 +569,18 @@ function startListening() {
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const res = event.results[i], candidates = [];
       for (let j = 0; j < res.length; j++) candidates.push(res[j].transcript.trim());
-      if (res.isFinal) processTranscripts(candidates);
-      else if (candidates[0]) $('#overlayHeard').textContent = candidates[0];
+      if (res.isFinal) {
+        clearTimeout(state.interimTimer);
+        processTranscripts(candidates, 'final', false);
+      } else if (candidates[0]) {
+        $('#overlayHeard').textContent = candidates[0] + '（辨識中）';
+        clearTimeout(state.interimTimer);
+        const snapshot = candidates.slice();
+        // Some browsers show the correct interim text but delay/never emit a final result
+        // for very short Cantonese cues such as 「議程一」. Try a quiet high-confidence
+        // interim match after the text is stable for a short moment.
+        state.interimTimer = setTimeout(() => processTranscripts(snapshot, 'interim', true), 650);
+      }
     }
   };
   try { state.recognition.start(); } catch (err) { log(err.message || String(err), 'bad'); }

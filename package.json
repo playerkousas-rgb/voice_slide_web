@@ -1,6 +1,6 @@
 {
   "name": "voice-cue-slide-tool-static",
-  "version": "0.2.4",
+  "version": "0.2.7",
   "private": true,
   "description": "No-install browser-based voice cue slide player MVP for GitHub + Vercel",
   "scripts": {
